@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:barcode_scan/barcode_scan.dart';
+import 'package:flutter/services.dart';
 
 void main() => runApp(MyApp());
 
@@ -47,15 +48,20 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String result = "";
 
-  Future scanBarcode() async{
+  Future scanBarcode() async {
     //String barcodeResult = await FlutterBarcodeScanner.scanBarcode("#ff6666", "Cancel", true, ScanMode.QR);
-    ScanResult barcode = await BarcodeScanner.scan();
-    setState(() {
-      result = barcode.rawContent;
-    });
-
-  }
-
+      try {
+        ScanResult barcode = await BarcodeScanner.scan();
+        setState(() => result = barcode.rawContent);
+      } on PlatformException catch (e) {
+        if (e.code == BarcodeScanner.cameraAccessDenied) {
+          setState(() =>
+          this.result = 'The user did not grant the camera permission!');
+        } else {
+          setState(() => this.result = 'Unknown error: $e');
+        }
+      }
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -80,3 +86,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
