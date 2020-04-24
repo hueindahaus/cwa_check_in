@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'ticket.dart';
 
 void main() => runApp(MyApp());
 
@@ -47,12 +51,50 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String result = "";
+  bool isAlreadyScanned = false;
+  String isAlreadyScannedString = "Is already scanned: ";
+
+  Future<http.Response> getScannedHttpRequest(String ticketId) {
+    return http.get(
+      'https://alexanderhuangen.wixsite.com/mysite/_functions/getScanned/' + ticketId,
+      );
+  }
+
+
+  Future<http.Response> setScannedHttpRequest(String ticketId) {
+    return http.put(
+      'https://alexanderhuangen.wixsite.com/mysite/_functions/setScanned',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, Object>{
+        //important to have _id since wix is checking if an object with the same _id property is present in a database collection
+        '_id': ticketId,
+        'scanned': true
+      }),
+    );
+  }
 
   Future scanBarcode() async {
-    //String barcodeResult = await FlutterBarcodeScanner.scanBarcode("#ff6666", "Cancel", true, ScanMode.QR);
       try {
         ScanResult barcode = await BarcodeScanner.scan();
         setState(() => result = barcode.rawContent);
+
+        http.Response response = await getScannedHttpRequest(result);
+
+        print('Response status: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        if (response.statusCode == 200) {
+          // If the server did return a 200 GET response,
+          // then parse the JSON.
+          Ticket object = Ticket.fromJson(json.decode(response.body));
+          setState(()=> isAlreadyScanned = object.scanned);
+        } else {
+          // If the server did not return a 201 CREATED response,
+          // then throw an exception.
+          throw Exception('Failed to load album');
+        }
+
       } on PlatformException catch (e) {
         if (e.code == BarcodeScanner.cameraAccessDenied) {
           setState(() =>
@@ -60,6 +102,8 @@ class _MyHomePageState extends State<MyHomePage> {
         } else {
           setState(() => this.result = 'Unknown error: $e');
         }
+      } catch(error) {
+        print("${error?.toString()}");
       }
     }
 
@@ -71,10 +115,18 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text("QR Scanner"),
       ),
       body: Center(
-        child: Text(
-          result,
-          style: new TextStyle(fontSize: 30.0),
-        ),
+        child: Column(
+          children:<Widget>[
+            Text(
+              result,
+              style: new TextStyle(fontSize: 30.0),
+          ),
+            Text(
+              isAlreadyScannedString + isAlreadyScanned.toString(),
+              style: new TextStyle(fontSize: 30.0),
+            ),
+          ]
+        )
       ),
 
       floatingActionButton: FloatingActionButton.extended(
