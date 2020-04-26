@@ -33,6 +33,7 @@ dev_dependencies:
   barcode_scan: any
   http:
   progress_dialog:
+  feather_icons_flutter:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'ticket.dart';
 import 'event.dart';
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:feather_icons_flutter/feather_icons_flutter.dart';
 
 void main() => runApp(MyApp());
 
@@ -56,30 +57,45 @@ class EventPageState extends State<EventPage>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF272727),
       appBar: AppBar(
-        title: Text("Choose event to check in"),
-
+        title: Text("CWA", style: TextStyle(color: Color(0xFFBCA4FE)),),
+        backgroundColor: Color(0xFF363636)
       ),
-      body: FutureBuilder(
-        future: getEventsFromServer(),
-        builder: (context,snapshot){
-          if(snapshot.hasData){
-            return ListView.builder(
-                itemCount: snapshot.data.length,
-                itemBuilder: (context, index){
-                  return Card(
-                    child: ListTile(
-                      onTap: (){
-                        Navigator.push(context ,MaterialPageRoute(builder: (context) => ScanPage(event: snapshot.data[index])));
-                        },
-                      title: Text(snapshot.data[index].id),
-                    ),
+      body: Column(
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.only(top:16,bottom: 10),
+              child: Text("Choose event for check-in",
+                style: TextStyle(color: Colors.white, fontSize: 16,),
+                textAlign: TextAlign.left,
+              )
+          ),
+          Expanded(
+            child: FutureBuilder(
+              future: getEventsFromServer(),
+              builder: (context,snapshot){
+                if(snapshot.hasData){
+                  return ListView.builder(
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, index){
+                        return Card(
+                          elevation: 2,
+                          color: Color(0xFF363636),
+                          child: ListTile(
+                            onTap: ( () => Navigator.push(context ,MaterialPageRoute(builder: (context) => ScanPage(event: snapshot.data[index])))),
+                            title: Text(snapshot.data[index].title, style: TextStyle(color: Color(0xFFFFFFFF)),),
+                          ),
+                        );
+                      }
                   );
+                } else {
+                  return Center(child: Column(children: [CircularProgressIndicator(), Text("If loading takes too long: server issues when getting event information")]));
                 }
-            );} else {
-            return Center(child: Column(children: [CircularProgressIndicator(), Text("If loading takes too long: server issues when getting event information")]));
-          }
-        },)
+                },),
+          ),
+        ],
+      )
     );
   }
 }
@@ -136,9 +152,14 @@ class ScanPageState extends State<ScanPage> {
         isDismissible: false,
       );
 
-      SimpleDialog successDialog = SimpleDialog(backgroundColor: Colors.green,);
-
-      progressDialog.style(insetAnimCurve: Curves.elasticInOut, progressWidget: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent)));
+      progressDialog.style(
+          insetAnimCurve: Curves.elasticInOut,
+          progressWidget: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFBCA4FE))
+          ),
+          backgroundColor: Color(0xFF363636),
+          messageTextStyle: TextStyle(color: Colors.white),
+      );
 
       try {
         ScanResult barcode = await BarcodeScanner.scan();
@@ -163,7 +184,7 @@ class ScanPageState extends State<ScanPage> {
                 //success feedback
                 object.scanned = true;
                 await progressDialog.hide();
-                setState(() => tickets.insert(0,object));
+                setState(() => addTicketToList(object));
               } else {
                 await progressDialog.hide();
                 alert(context, "Scan failed", "Failed to mark ticket as scanned in database or server offline");
@@ -205,16 +226,20 @@ class ScanPageState extends State<ScanPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Color(0xFF363636),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           title: Text(
               title,
               style: TextStyle(
-                  color: Colors.red.withOpacity(0.6)
+                  color: Color(0xFFFB6940)
               )
           ),
-          content: Text(message),
+          content: Text(message, style: TextStyle(color: Colors.white)),
           actions: <Widget>[
             FlatButton(
-              child: Text('Ok'),
+              child: Text('Ok', style: TextStyle(color: Colors.white),),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -238,7 +263,7 @@ class ScanPageState extends State<ScanPage> {
       List<dynamic> json_list = jsonDecode(response.body)['tickets'] as List<dynamic>;
       for(dynamic object in json_list){
         setState(() {
-          tickets.insert(0, Ticket.fromJson2(object));
+          addTicketToList(Ticket.fromJson2(object));
         });
       }
 
@@ -251,41 +276,96 @@ class ScanPageState extends State<ScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF272727),
       appBar: AppBar(
-        title: Text("QR Scanner"),
-        backgroundColor: Colors.blueAccent,
+        title: Text("Check in session", style: TextStyle(color: Color(0xFFBCA4FE))),
+        backgroundColor: Color(0xFF363636),
 
     ),
       body: Column(
         children: <Widget>[
-          Card(
-            child: Container(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height / 4,
-                child: Text("Event: " + currentEvent.id),
+          Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 10),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height / 4,
+                  decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFbca4fe), Color(0xFF363636)], begin: Alignment.topLeft,
+                    end: Alignment(0.8, 0.0), ), borderRadius: BorderRadius.circular(10),),
+                child: Center(
+                  child: ListTile(
+                    leading: Icon(FeatherIcons.calendar, color: Colors.white,),
+                    onTap: (){},
+                    title: Text(
+                      currentEvent.title,
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                    subtitle: Text(
+                      "Event id: " + currentEvent.id,
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                )
+              ),
             ),
           ),
           Expanded(
-              child:ListView.builder(
-                  itemCount: tickets.length,
-                  itemBuilder: (context, index){
-                    return Card(
-                      child: ListTile(
-                        onTap: (){},
-                        title: Text(tickets[index].id),
-                      ),
-                    );
-                  })
+              child: AnimatedList(
+                key: key,
+                initialItemCount: tickets.length,
+                itemBuilder: (context, index, animation){
+                  return buildItem(animation, index);
+                }),
           )
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: scanBarcode,
-        icon: Icon(Icons.camera_alt),
-        label: Text("Scan"),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: FloatingActionButton.extended
+          (onPressed: scanBarcode,
+          label: Text("Scan",
+              style: TextStyle(color: Colors.black)
+          ),
+          icon: Icon(FeatherIcons.maximize, color: Colors.black,),
+          backgroundColor: Color(0xFFBCA4FE),),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
-  }
-}
 
+  }
+
+
+
+
+  final GlobalKey<AnimatedListState> key = GlobalKey();
+
+  Widget buildItem(Animation animation, int index){   //itemBuilder för tickets
+
+    return SizeTransition(
+      sizeFactor: animation,
+        child: Card(
+        elevation: 2,
+        color: Color(0xFF363636),
+          child: ListTile(
+            title: Text(
+              tickets[index].id,
+              style: TextStyle(
+                  color: Color(0xFFFFFFFF)
+              ),
+            ),
+            leading: Icon(FeatherIcons.check, color: Colors.white,),
+          ),
+        )
+    );
+  }
+
+  void addTicketToList(Ticket ticket){
+    tickets.insert(0, ticket);
+    key.currentState.insertItem(0);
+  }
+
+}
