@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 
 class Ticket {
   String id;
@@ -6,7 +5,7 @@ class Ticket {
   String owner;
   bool scanned;
 
-  Ticket({@required this.id, @required this.eventId, @required this.owner, @required this.scanned});
+  Ticket({this.id, this.eventId, this.owner, this.scanned});
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
     Map<String,dynamic> ticket = json["ticket"];
@@ -19,6 +18,14 @@ class Ticket {
     );
   }
 
+  factory Ticket.fromJson2(Map<String, dynamic> json) {
+    return Ticket(
+        id: json['_id'],
+        eventId: json['event'],
+        owner: json['member'],
+        scanned: json['scanned']
+    );
+  }
 
 
 }
