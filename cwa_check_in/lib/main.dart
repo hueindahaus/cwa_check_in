@@ -280,7 +280,6 @@ class ScanPageState extends State<ScanPage> {
       appBar: AppBar(
         title: Text("Check in session", style: TextStyle(color: Color(0xFFBCA4FE))),
         backgroundColor: Color(0xFF363636),
-
     ),
       body: Column(
         children: <Widget>[
